@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "P2xVdhYGqdqj1ti0HgmUqrVYXQEegyJTtnXsAQbf6de0Jc0OJii4oxUAngwGkBThHUFH7LET6/aC89Q7vRlWMg==",
+  "dgSpecHash": "9UWnALRrjMwbnjI8Foj/nBYg7ox2ve8gXVsa/Ai7+wTI6cmQTrm9uxK++ztAYOnnTGhzDXcg16LbIqjuSfi7CA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\USER\\Desktop\\Sistemas de informacion\\Unidad 1\\ProyectoApiContable\\ProyectoApiContable\\ProyectoApiContable.csproj",
+  "projectFilePath": "C:\\Users\\USER\\Desktop\\ProyectoApiContable\\ProyectoApiContable\\ProyectoApiContable\\ProyectoApiContable.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\USER\\.nuget\\packages\\automapper\\12.0.1\\automapper.12.0.1.nupkg.sha512",
     "C:\\Users\\USER\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
