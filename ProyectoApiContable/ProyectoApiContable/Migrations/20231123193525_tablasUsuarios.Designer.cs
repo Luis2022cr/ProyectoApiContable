@@ -12,8 +12,8 @@ using ProyectoApiContable.Entities;
 namespace ProyectoApiContable.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231122230445_TablasUsuarios")]
-    partial class TablasUsuarios
+    [Migration("20231123193525_tablasUsuarios")]
+    partial class tablasUsuarios
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

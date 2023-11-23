@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProyectoApiContable.Migrations
 {
     /// <inheritdoc />
-    public partial class TablasUsuarios : Migration
+    public partial class tablasUsuarios : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

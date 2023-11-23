@@ -15,6 +15,7 @@ namespace ProyectoApiContable.Entities
                 if (!roleManager.Roles.Any())
                 {
                     await roleManager.CreateAsync(new IdentityRole("Admin"));
+                    await roleManager.CreateAsync(new IdentityRole("User"));
                 }
 
                 if (!userManager.Users.Any())
