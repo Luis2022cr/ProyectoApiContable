@@ -27,7 +27,7 @@ namespace ProyectoApiContable
                     options.UseSqlServer(Configuration
                         .GetConnectionString("DefaultConnection"));
                 });
-
+                
                 // Add Identity
                 services.AddIdentity<IdentityUser, IdentityRole>(options =>
                 {

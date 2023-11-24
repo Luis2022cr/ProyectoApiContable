@@ -12,8 +12,8 @@ using ProyectoApiContable.Entities;
 namespace ProyectoApiContable.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231123193525_tablasUsuarios")]
-    partial class tablasUsuarios
+    [Migration("20231124203309_TablasCreacion")]
+    partial class TablasCreacion
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -224,6 +224,121 @@ namespace ProyectoApiContable.Migrations
                     b.ToTable("users_tokens", "Security");
                 });
 
+            modelBuilder.Entity("ProyectoApiContable.Entities.CatalogoCuentas", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("nombre");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total");
+
+                    b.Property<string>("Usuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("usuario");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("catalogo_cuentas", "contable");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.PartidasContables", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Codigo")
+                        .HasColumnType("int")
+                        .HasColumnName("codigo");
+
+                    b.Property<int>("CuentaDebeId")
+                        .HasColumnType("int")
+                        .HasColumnName("cuenta_debe_id");
+
+                    b.Property<int>("CuentaHaberId")
+                        .HasColumnType("int")
+                        .HasColumnName("cuenta_haber_id");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("descripcion");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("monto");
+
+                    b.Property<string>("NombrePartida")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("nombre_partida");
+
+                    b.Property<string>("usuario")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("usuario");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("partidas_contables", "contable");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.PartidasCuentas", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CatalogoCuentaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PartidaContableId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogoCuentaId");
+
+                    b.HasIndex("PartidaContableId");
+
+                    b.ToTable("partidas_cuentas", "contable");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -273,6 +388,30 @@ namespace ProyectoApiContable.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.PartidasCuentas", b =>
+                {
+                    b.HasOne("ProyectoApiContable.Entities.CatalogoCuentas", "CatalogoCuentas")
+                        .WithMany()
+                        .HasForeignKey("CatalogoCuentaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProyectoApiContable.Entities.PartidasContables", "PartidaContable")
+                        .WithMany("PartidasCuentas")
+                        .HasForeignKey("PartidaContableId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CatalogoCuentas");
+
+                    b.Navigation("PartidaContable");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.PartidasContables", b =>
+                {
+                    b.Navigation("PartidasCuentas");
                 });
 #pragma warning restore 612, 618
         }

@@ -25,5 +25,8 @@ namespace ProyectoApiContable.Entities
             builder.Entity<IdentityUserToken<string>>().ToTable("users_tokens");
         }
 
+        public DbSet<PartidasContables> partidasContables { get; set; }
+        public DbSet<PartidasCuentas> partidasCuentas { get; set; }
+        public DbSet<CatalogoCuentas> catalogoCuentas { get; set; }
     }
 }
