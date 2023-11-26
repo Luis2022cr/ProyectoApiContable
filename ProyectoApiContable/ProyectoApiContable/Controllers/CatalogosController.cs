@@ -21,7 +21,7 @@ namespace ProyectoApiContable.Controllers
         [HttpGet]
         public async Task<ActionResult<ResponseDto<IReadOnlyList<CatalogoDto>>>> Get()
         {
-            var catalogosDb = await _context.catalogoCuentas.ToListAsync();
+            var catalogosDb = await _context.CatalogoCuentas.ToListAsync();
             var catalogosDto = _mapper.Map<List<CatalogoDto>>(catalogosDb);
             return Ok(new ResponseDto<List<CatalogoDto>>
             {
@@ -35,7 +35,7 @@ namespace ProyectoApiContable.Controllers
         public async Task<ActionResult<CatalogoGetByIdDto>> GetOneById(int id)
         {
 
-            var catalogoDb = await _context.catalogoCuentas.FirstOrDefaultAsync(x => x.Id == id);
+            var catalogoDb = await _context.CatalogoCuentas.FirstOrDefaultAsync(x => x.Id == id);
 
             var catalogoDto = _mapper.Map<CatalogoGetByIdDto>(catalogoDb);
 
@@ -78,7 +78,7 @@ namespace ProyectoApiContable.Controllers
         [HttpPut("{id:int}")] // api/catalogos/4
         public async Task<ActionResult<ResponseDto<CatalogoGetByIdDto>>> Put(int id, CatalogoUpdateDto dto)
         {
-            var catalogoDb = await _context.catalogoCuentas.FirstOrDefaultAsync(a => a.Id == id);
+            var catalogoDb = await _context.CatalogoCuentas.FirstOrDefaultAsync(a => a.Id == id);
 
             if (catalogoDb is null)
             {
@@ -107,7 +107,7 @@ namespace ProyectoApiContable.Controllers
         [HttpDelete("id:int")]
         public async Task<ActionResult<ResponseDto<string>>> Delete(int id)
         {
-            var catalogo = await _context.catalogoCuentas.FirstOrDefaultAsync(a => a.Id == id);
+            var catalogo = await _context.CatalogoCuentas.FirstOrDefaultAsync(a => a.Id == id);
             if (catalogo is null)
             {
                 return NotFound(new ResponseDto<CatalogoGetByIdDto>

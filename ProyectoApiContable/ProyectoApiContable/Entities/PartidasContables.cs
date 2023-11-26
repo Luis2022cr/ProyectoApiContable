@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProyectoApiContable.Entities
 {
-    [Table("partidas_contables", Schema = "contable")]
+    [Table("partidas_contables")]
     public class PartidasContables
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -19,21 +19,27 @@ namespace ProyectoApiContable.Entities
         [Required]
         public int Codigo { get; set; }
 
-        [Column("fecha")]
+        [Column("fecha_creacion")]
         [DataType(DataType.Date)]
-        public DateTime Fecha { get; set; }
+        public DateTime FechaCreacion { get; set; }
 
-        [Column("cuenta_debe_id")]
-        [Required]
-        public int CuentaDebeId { get; set; }
+        [Column("Cuenta_debito")]
+        [ForeignKey("CuentaDebito")]
+        public int CuentaDebitoId { get; set; }
+        public CatalogoCuentas CuentaDebito { get; set; }
 
-        [Column("cuenta_haber_id")]
+        [Column("Cuenta_credito")]
+        [ForeignKey("CuentaCredito")]
+        public int CuentaCreditoId { get; set; }
+        public CatalogoCuentas CuentaCredito { get; set; }
+        
+        [Column("monto_debito")]
         [Required]
-        public int CuentaHaberId { get; set; }
-
-        [Column("monto")]
+        public decimal MontoDebito { get; set; }
+        
+        [Column("monto_credito")]
         [Required]
-        public decimal Monto { get; set; }
+        public decimal MontoCredito { get; set; }
 
         [Column("descripcion")]
         [StringLength(255)]
@@ -43,6 +49,6 @@ namespace ProyectoApiContable.Entities
         [Required]
         public string usuario { get; set; }
 
-        public List<PartidasCuentas> PartidasCuentas { get; set; }
+        
     }
 }
