@@ -1,26 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Identity;
 
 namespace ProyectoApiContable.Entities;
 
  
-    [Table("catalogo_cuentas")]
-    public class CatalogoCuentas
+    [Table("cuentas")]
+    public class Cuenta
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
-        [Column("nombre")]
+        [Column("nombre")] 
         [StringLength(50)]
         [Required]
         public string Nombre { get; set; }
 
-        [Column("usuario")]
+        [Column("codigo")]
         [StringLength(50)]
         [Required]
-        public string Usuario { get; set; }
+        public int Codigo { get; set; }
 
         [Column("descripcion")]
         [StringLength(255)]
@@ -31,10 +33,7 @@ namespace ProyectoApiContable.Entities;
         [Required]
         public DateTime FechaCreacion { get; set; }
         
+        public ICollection<FilasPartida> FilasPartida { get; set; }
         
-        public ICollection<PartidasContables> PartidasContablesDebito { get; set; }
-        public ICollection<PartidasContables> PartidasContablesCredito { get; set; }
-
-       
     }
     

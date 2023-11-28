@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ProyectoApiContable.Entities;
 using System.Text;
-using System.Text.Json.Serialization;
+using ProyectoApiContable.Helpers;
 
 namespace ProyectoApiContable
 {
@@ -27,6 +27,9 @@ namespace ProyectoApiContable
                     options.UseSqlServer(Configuration
                         .GetConnectionString("DefaultConnection"));
                 });
+                
+                // Add AutoMapper
+                services.AddAutoMapper(typeof(AutoMapperProfiles));
                 
                 // Add Identity
                 services.AddIdentity<IdentityUser, IdentityRole>(options =>

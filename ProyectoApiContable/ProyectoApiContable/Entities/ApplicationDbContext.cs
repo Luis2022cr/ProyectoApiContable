@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace ProyectoApiContable.Entities
-{
+namespace ProyectoApiContable.Entities;
+
     public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
-        public DbSet<CatalogoCuentas> CatalogoCuentas { get; set; }
-        public DbSet<PartidasContables> PartidasContables { get; set; }
+        public DbSet<Partida> Partidas { get; set; }
+        public DbSet<FilasPartida> FilasPartidas { get; set; }
+        public DbSet<Cuenta> Cuentas { get; set; }
+
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -16,7 +18,7 @@ namespace ProyectoApiContable.Entities
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
 
             modelBuilder.Entity<IdentityUser>().ToTable("users");
             modelBuilder.Entity<IdentityRole>().ToTable("roles");
@@ -26,18 +28,14 @@ namespace ProyectoApiContable.Entities
             modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("roles_claims");
             modelBuilder.Entity<IdentityUserToken<string>>().ToTable("users_tokens");
 
-            // Configuración de la relación entre CatalogoCuentas y PartidasContables
-            modelBuilder.Entity<PartidasContables>()
-                .HasOne(p => p.CuentaDebito)
-                .WithMany(c => c.PartidasContablesDebito)
-                .HasForeignKey(p => p.CuentaDebitoId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Partida>()
+                .HasMany(p => p.FilasPartida)
+                .WithOne(fp => fp.Partida)
+                .HasForeignKey(fp => fp.PartidaId);
 
-            modelBuilder.Entity<PartidasContables>()
-                .HasOne(p => p.CuentaCredito)
-                .WithMany(c => c.PartidasContablesCredito)
-                .HasForeignKey(p => p.CuentaCreditoId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Cuenta>()
+                .HasMany(c => c.FilasPartida)
+                .WithOne(fp => fp.Cuenta)
+                .HasForeignKey(fp => fp.CuentaId);
         }
-    }
-}
+    };
