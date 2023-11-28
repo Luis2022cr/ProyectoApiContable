@@ -33,13 +33,10 @@ namespace ProyectoApiContable.Entities
         public int CuentaCreditoId { get; set; }
         public CatalogoCuentas CuentaCredito { get; set; }
         
-        [Column("monto_debito")]
+        [Column("monto")]
         [Required]
-        public decimal MontoDebito { get; set; }
+        public decimal Monto { get; set; }
         
-        [Column("monto_credito")]
-        [Required]
-        public decimal MontoCredito { get; set; }
 
         [Column("descripcion")]
         [StringLength(255)]

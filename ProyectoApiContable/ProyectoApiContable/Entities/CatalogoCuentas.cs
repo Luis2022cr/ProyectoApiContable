@@ -30,19 +30,11 @@ namespace ProyectoApiContable.Entities;
         [DataType(DataType.Date)]
         [Required]
         public DateTime FechaCreacion { get; set; }
-
-        [NotMapped]
-        public decimal Total => CalcularTotalPartidas();
+        
         
         public ICollection<PartidasContables> PartidasContablesDebito { get; set; }
         public ICollection<PartidasContables> PartidasContablesCredito { get; set; }
 
-        public decimal CalcularTotalPartidas()
-        {
-            decimal totalDebito = PartidasContablesDebito?.Sum(p => p.MontoDebito) ?? 0;
-            decimal totalCredito = PartidasContablesCredito?.Sum(p => p.MontoCredito) ?? 0;
-
-            return totalDebito - totalCredito;
-        }
+       
     }
     

@@ -6,7 +6,9 @@ using ProyectoApiContable.Dtos.Catalogos;
 using ProyectoApiContable.Entities;
 
 namespace ProyectoApiContable.Controllers
-{
+{ 
+    [Route("api/Catalogos")]
+    [ApiController]
     public class CatalogosController: ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -102,9 +104,9 @@ namespace ProyectoApiContable.Controllers
                 Message = "Catalogo editado correctamente",
                 Data = catalogoDto
             });
-        }
+        } 
 
-        [HttpDelete("id:int")]
+        [HttpDelete("{id:int}")]
         public async Task<ActionResult<ResponseDto<string>>> Delete(int id)
         {
             var catalogo = await _context.CatalogoCuentas.FirstOrDefaultAsync(a => a.Id == id);
