@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using ProyectoApiContable.Entities;
 using System.Text;
 using ProyectoApiContable.Helpers;
+using ProyectoApiContable.Services;
+using StackExchange.Redis;
 
 namespace ProyectoApiContable
 {
@@ -31,6 +33,16 @@ namespace ProyectoApiContable
                 // Add AutoMapper
                 services.AddAutoMapper(typeof(AutoMapperProfiles));
                 
+                // Add Servicio de Email
+                services.AddTransient<IEmailService, EmailService>();
+
+                // Add Redis
+                string redisConnectionString = Configuration.GetConnectionString("Redis");
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+                
+                //Agregar Servicio de Redis
+                services.AddScoped<IRedisServices, RedisServices>();
+
                 // Add Identity
                 services.AddIdentity<IdentityUser, IdentityRole>(options =>
                 {
@@ -58,7 +70,7 @@ namespace ProyectoApiContable
                             (Encoding.UTF8.GetBytes(Configuration["JWT:Secret"]))
                     };
                 });
-            services.AddEndpointsApiExplorer();
+                services.AddEndpointsApiExplorer();
                 services.AddSwaggerGen();
             }
 

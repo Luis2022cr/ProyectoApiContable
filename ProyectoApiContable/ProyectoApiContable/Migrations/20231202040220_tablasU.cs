@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProyectoApiContable.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class tablasU : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -117,7 +117,7 @@ namespace ProyectoApiContable.Migrations
                         column: x => x.tipo_cuenta_id,
                         principalTable: "tipos_cuentas",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
