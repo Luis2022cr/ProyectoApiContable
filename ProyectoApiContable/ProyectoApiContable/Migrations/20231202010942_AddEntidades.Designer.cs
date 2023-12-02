@@ -12,7 +12,7 @@ using ProyectoApiContable.Entities;
 namespace ProyectoApiContable.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231128210757_AddEntidades")]
+    [Migration("20231202010942_AddEntidades")]
     partial class AddEntidades
     {
         /// <inheritdoc />
@@ -242,7 +242,37 @@ namespace ProyectoApiContable.Migrations
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2")
-                        .HasColumnName("fechaCreacion");
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("nombre");
+
+                    b.Property<decimal>("Saldo")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("saldo");
+
+                    b.Property<int>("TipoCuentaId")
+                        .HasColumnType("int")
+                        .HasColumnName("tipo_cuenta_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TipoCuentaId");
+
+                    b.ToTable("cuentas");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.EstadoPartida", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -252,7 +282,7 @@ namespace ProyectoApiContable.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("cuentas");
+                    b.ToTable("estados_partidas", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoApiContable.Entities.FilasPartida", b =>
@@ -294,13 +324,23 @@ namespace ProyectoApiContable.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<bool>("Aprobado")
-                        .HasColumnType("bit")
-                        .HasColumnName("aprobado");
+                    b.Property<string>("AprobadoPorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("aprobado_por_id");
+
+                    b.Property<string>("CreadoPorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("creado_por_id");
 
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("descripcion");
+
+                    b.Property<int>("EstadoPartidaId")
+                        .HasColumnType("int")
+                        .HasColumnName("estado_partida_id");
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2")
@@ -312,16 +352,35 @@ namespace ProyectoApiContable.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("nombre");
 
-                    b.Property<string>("UsuarioId")
+                    b.HasKey("Id");
+
+                    b.HasIndex("AprobadoPorId");
+
+                    b.HasIndex("CreadoPorId");
+
+                    b.HasIndex("EstadoPartidaId");
+
+                    b.ToTable("partidas");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.TipoCuenta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("usuario_id");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("nombre");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("partidas");
+                    b.ToTable("tipos_cuentas", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -375,6 +434,17 @@ namespace ProyectoApiContable.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ProyectoApiContable.Entities.Cuenta", b =>
+                {
+                    b.HasOne("ProyectoApiContable.Entities.TipoCuenta", "TipoCuenta")
+                        .WithMany("Cuentas")
+                        .HasForeignKey("TipoCuentaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TipoCuenta");
+                });
+
             modelBuilder.Entity("ProyectoApiContable.Entities.FilasPartida", b =>
                 {
                     b.HasOne("ProyectoApiContable.Entities.Cuenta", "Cuenta")
@@ -396,13 +466,29 @@ namespace ProyectoApiContable.Migrations
 
             modelBuilder.Entity("ProyectoApiContable.Entities.Partida", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "AprobadoPor")
                         .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("AprobadoPorId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "CreadoPor")
+                        .WithMany()
+                        .HasForeignKey("CreadoPorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProyectoApiContable.Entities.EstadoPartida", "EstadoPartida")
+                        .WithMany("Partidas")
+                        .HasForeignKey("EstadoPartidaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AprobadoPor");
+
+                    b.Navigation("CreadoPor");
+
+                    b.Navigation("EstadoPartida");
                 });
 
             modelBuilder.Entity("ProyectoApiContable.Entities.Cuenta", b =>
@@ -410,9 +496,19 @@ namespace ProyectoApiContable.Migrations
                     b.Navigation("FilasPartida");
                 });
 
+            modelBuilder.Entity("ProyectoApiContable.Entities.EstadoPartida", b =>
+                {
+                    b.Navigation("Partidas");
+                });
+
             modelBuilder.Entity("ProyectoApiContable.Entities.Partida", b =>
                 {
                     b.Navigation("FilasPartida");
+                });
+
+            modelBuilder.Entity("ProyectoApiContable.Entities.TipoCuenta", b =>
+                {
+                    b.Navigation("Cuentas");
                 });
 #pragma warning restore 612, 618
         }

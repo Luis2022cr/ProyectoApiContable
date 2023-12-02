@@ -9,7 +9,10 @@ namespace ProyectoApiContable.Entities;
         public DbSet<Partida> Partidas { get; set; }
         public DbSet<FilasPartida> FilasPartidas { get; set; }
         public DbSet<Cuenta> Cuentas { get; set; }
-
+        
+        public DbSet<EstadoPartida> EstadosPartidas { get; set; }
+        
+        public DbSet<TipoCuenta> TiposCuentas { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -28,14 +31,51 @@ namespace ProyectoApiContable.Entities;
             modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("roles_claims");
             modelBuilder.Entity<IdentityUserToken<string>>().ToTable("users_tokens");
 
+            // Configuración de relaciones para Partida
             modelBuilder.Entity<Partida>()
-                .HasMany(p => p.FilasPartida)
-                .WithOne(fp => fp.Partida)
+                .HasOne(p => p.CreadoPor)
+                .WithMany()
+                .HasForeignKey(p => p.CreadoPorId)
+                .OnDelete(DeleteBehavior.Restrict); // Evitar la eliminación en cascada
+
+            modelBuilder.Entity<Partida>()
+                .HasOne(p => p.AprobadoPor)
+                .WithMany()
+                .HasForeignKey(p => p.AprobadoPorId)
+                .OnDelete(DeleteBehavior.Restrict); // Evitar la eliminación en cascada
+
+            modelBuilder.Entity<Partida>()
+                .HasOne(p => p.EstadoPartida)
+                .WithMany(ep => ep.Partidas)
+                .HasForeignKey(p => p.EstadoPartidaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuración de relaciones para FilasPartida
+            modelBuilder.Entity<FilasPartida>()
+                .HasOne(fp => fp.Cuenta)
+                .WithMany(c => c.FilasPartida)
+                .HasForeignKey(fp => fp.CuentaId);
+
+            modelBuilder.Entity<FilasPartida>()
+                .HasOne(fp => fp.Partida)
+                .WithMany(p => p.FilasPartida)
                 .HasForeignKey(fp => fp.PartidaId);
 
+            // Configuración de relaciones para Cuenta y TipoCuenta
             modelBuilder.Entity<Cuenta>()
-                .HasMany(c => c.FilasPartida)
-                .WithOne(fp => fp.Cuenta)
-                .HasForeignKey(fp => fp.CuentaId);
+                .HasOne(c => c.TipoCuenta)
+                .WithMany(tc => tc.Cuentas)
+                .HasForeignKey(c => c.TipoCuentaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuración específica para TipoCuenta
+            modelBuilder.Entity<TipoCuenta>()
+                .ToTable("tipos_cuentas");
+
+            // Configuración específica para EstadoPartida
+            modelBuilder.Entity<EstadoPartida>()
+                .ToTable("estados_partidas");
+            
+            
         }
     };

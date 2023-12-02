@@ -25,17 +25,27 @@ public class Partida
     [DataType(DataType.Date)]
     public DateTime FechaCreacion { get; set; }
     
-    [Column("usuario_id")]
+    [Column("creado_por_id")]
     [Required]
-    public string UsuarioId { get; set; }
+    public string CreadoPorId { get; set; }
     
-    [Column("aprobado")]
+    [Column("estado_partida_id")]
     [Required]
-    public bool Aprobado { get; set; }
+    public int EstadoPartidaId { get; set; }
     
-    [ForeignKey(nameof(UsuarioId))] public virtual IdentityUser User { get; set; }
+    [Column("aprobado_por_id")]
+    [Required]
+    public string AprobadoPorId { get; set; }
+    
+    [ForeignKey(nameof(CreadoPorId))]
+    public virtual IdentityUser CreadoPor { get; set; }
+
+    [ForeignKey(nameof(AprobadoPorId))]
+    public virtual IdentityUser AprobadoPor { get; set; }
     
     
+    [ForeignKey(nameof(EstadoPartidaId))]
+    public virtual EstadoPartida EstadoPartida { get; set; }
     public virtual ICollection<FilasPartida> FilasPartida { get; set; }
     
 }

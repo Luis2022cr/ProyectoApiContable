@@ -9,11 +9,16 @@
         
         public int Codigo { get; set; }
         
+        public int TipoCuentaId { get; set; }
+        
+        public decimal Saldo { get; set; }
+        
         public string Descripcion { get; set; }
         
         public DateTime FechaCreacion { get; set; }
         
         public string FechaCreacionFormatted => FechaCreacion.ToString("dd/MM/yyyy");
+        
     }
        
     

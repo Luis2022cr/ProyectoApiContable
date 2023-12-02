@@ -6,24 +6,22 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProyectoApiContable.Migrations
 {
     /// <inheritdoc />
-    public partial class AddEntidades : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "cuentas",
+                name: "estados_partidas",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    codigo = table.Column<int>(type: "int", maxLength: 50, nullable: false),
-                    descripcion = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    fechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_cuentas", x => x.id);
+                    table.PrimaryKey("PK_estados_partidas", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -38,6 +36,19 @@ namespace ProyectoApiContable.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "tipos_cuentas",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_tipos_cuentas", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,6 +98,29 @@ namespace ProyectoApiContable.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "cuentas",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    tipo_cuenta_id = table.Column<int>(type: "int", nullable: false),
+                    codigo = table.Column<int>(type: "int", maxLength: 50, nullable: false),
+                    descripcion = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    fecha_creacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_cuentas", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_cuentas_tipos_cuentas_tipo_cuenta_id",
+                        column: x => x.tipo_cuenta_id,
+                        principalTable: "tipos_cuentas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "partidas",
                 columns: table => new
                 {
@@ -94,18 +128,31 @@ namespace ProyectoApiContable.Migrations
                     nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     descripcion = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     fecha_creacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    usuario_id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    aprobado = table.Column<bool>(type: "bit", nullable: false)
+                    creado_por_id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    estado_partida_id = table.Column<int>(type: "int", nullable: false),
+                    aprobado_por_id = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_partidas", x => x.id);
                     table.ForeignKey(
-                        name: "FK_partidas_users_usuario_id",
-                        column: x => x.usuario_id,
+                        name: "FK_partidas_estados_partidas_estado_partida_id",
+                        column: x => x.estado_partida_id,
+                        principalTable: "estados_partidas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_partidas_users_aprobado_por_id",
+                        column: x => x.aprobado_por_id,
                         principalTable: "users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_partidas_users_creado_por_id",
+                        column: x => x.creado_por_id,
+                        principalTable: "users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -221,6 +268,11 @@ namespace ProyectoApiContable.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_cuentas_tipo_cuenta_id",
+                table: "cuentas",
+                column: "tipo_cuenta_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_filas_partidas_cuenta_id",
                 table: "filas_partidas",
                 column: "cuenta_id");
@@ -231,9 +283,19 @@ namespace ProyectoApiContable.Migrations
                 column: "partida_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_partidas_usuario_id",
+                name: "IX_partidas_aprobado_por_id",
                 table: "partidas",
-                column: "usuario_id");
+                column: "aprobado_por_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_partidas_creado_por_id",
+                table: "partidas",
+                column: "creado_por_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_partidas_estado_partida_id",
+                table: "partidas",
+                column: "estado_partida_id");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
@@ -304,6 +366,12 @@ namespace ProyectoApiContable.Migrations
 
             migrationBuilder.DropTable(
                 name: "roles");
+
+            migrationBuilder.DropTable(
+                name: "tipos_cuentas");
+
+            migrationBuilder.DropTable(
+                name: "estados_partidas");
 
             migrationBuilder.DropTable(
                 name: "users");

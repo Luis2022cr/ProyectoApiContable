@@ -6,7 +6,9 @@ public class PartidaDto
     public string Nombre { get; set; }
     public string Descripcion { get; set; }
     public DateTime FechaCreacion { get; set; }
-    public string FechaCreacionFormatted => FechaCreacion.ToString("dd/MM/yyyy");
-    public string UsuarioId { get; set; }
-    public bool Aprobado { get; set; } 
+    public string CreadoPor { get; set; }
+    public int EstadoPartidaId { get; set; }
+    public string AprobadoPor { get; set; }
+    public DateTime FechaDeAprobacion { get; set; }
+
 }

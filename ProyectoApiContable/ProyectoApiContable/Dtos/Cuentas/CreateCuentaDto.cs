@@ -14,6 +14,11 @@ namespace ProyectoApiContable.Dtos.Catalogos
         public int Codigo { get; set; }
         public string Descripcion { get; set; }
         
+        [Required(ErrorMessage = "El {0} es requerido")]
+        public int TipoCuentaId { get; set; }
+        
+        [Required(ErrorMessage = "El {0} es requerido")]
+        public decimal Saldo { get; set; }
         
     }
 }
