@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
@@ -9,6 +10,7 @@ namespace ProyectoApiContable.Controllers;
 
 [Route("api/Cuentas")]
 [ApiController]
+[Authorize]
 public class CuentasController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

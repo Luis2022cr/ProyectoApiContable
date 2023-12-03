@@ -1,3 +1,5 @@
+using ProyectoApiContable.Dtos.FilasPartidas;
+
 namespace ProyectoApiContable.Dtos.Partidas;
 
 public class PartidaDto
@@ -8,7 +10,8 @@ public class PartidaDto
     public DateTime FechaCreacion { get; set; }
     public string CreadoPor { get; set; }
     public int EstadoPartidaId { get; set; }
-    public string AprobadoPor { get; set; }
-    public DateTime FechaDeAprobacion { get; set; }
+    public string RevisadoPor { get; set; }
+    public DateTime FechaRevision { get; set; }
+    public List<FilasPartidaDto> FilasPartida { get; set; }
 
 }

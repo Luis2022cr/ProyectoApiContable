@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
@@ -10,6 +11,7 @@ namespace ProyectoApiContable.Controllers;
 
 [Route("api/EstadosPartidas")]
 [ApiController]
+[Authorize]
 public class EstadosPartidasController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

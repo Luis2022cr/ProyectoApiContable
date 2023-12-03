@@ -28,8 +28,12 @@ namespace ProyectoApiContable.Helpers
 
         private void MapsForPartidas()
         {
-            CreateMap<Partida, PartidaDto>();
-            CreateMap<CreatePartidaDto, Partida>().ReverseMap();
+            CreateMap<CreatePartidaDto, Partida>()
+                .ForMember(dest => dest.FilasPartida, opt => opt.MapFrom(src => src.FilasPartida));
+
+            CreateMap<CreateFilasPartidaDto, FilasPartida>();
+            CreateMap<Partida, PartidaDto>()
+                .ForMember(dest => dest.FilasPartida, opt => opt.MapFrom(src => src.FilasPartida));
         }
 
         private void MapsForFilasPartidas()

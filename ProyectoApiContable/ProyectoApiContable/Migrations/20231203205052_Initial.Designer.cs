@@ -12,8 +12,8 @@ using ProyectoApiContable.Entities;
 namespace ProyectoApiContable.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231202040220_tablasU")]
-    partial class tablasU
+    [Migration("20231203205052_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -324,15 +324,10 @@ namespace ProyectoApiContable.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<string>("AprobadoPorId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("aprobado_por_id");
-
                     b.Property<string>("CreadoPorId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)")
-                        .HasColumnName("creado_por_id");
+                        .HasColumnName("creado_por");
 
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)")
@@ -346,19 +341,27 @@ namespace ProyectoApiContable.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("fecha_creacion");
 
+                    b.Property<DateTime?>("FechaRevision")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_aprobacion");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("nombre");
 
-                    b.HasKey("Id");
+                    b.Property<string>("RevisadoPorId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("revisado_por");
 
-                    b.HasIndex("AprobadoPorId");
+                    b.HasKey("Id");
 
                     b.HasIndex("CreadoPorId");
 
                     b.HasIndex("EstadoPartidaId");
+
+                    b.HasIndex("RevisadoPorId");
 
                     b.ToTable("partidas");
                 });
@@ -466,12 +469,6 @@ namespace ProyectoApiContable.Migrations
 
             modelBuilder.Entity("ProyectoApiContable.Entities.Partida", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "AprobadoPor")
-                        .WithMany()
-                        .HasForeignKey("AprobadoPorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "CreadoPor")
                         .WithMany()
                         .HasForeignKey("CreadoPorId")
@@ -484,11 +481,16 @@ namespace ProyectoApiContable.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("AprobadoPor");
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "RevisadoPor")
+                        .WithMany()
+                        .HasForeignKey("RevisadoPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CreadoPor");
 
                     b.Navigation("EstadoPartida");
+
+                    b.Navigation("RevisadoPor");
                 });
 
             modelBuilder.Entity("ProyectoApiContable.Entities.Cuenta", b =>

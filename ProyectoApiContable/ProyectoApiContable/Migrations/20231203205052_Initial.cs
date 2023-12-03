@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ProyectoApiContable.Migrations
 {
     /// <inheritdoc />
-    public partial class tablasU : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -128,9 +128,10 @@ namespace ProyectoApiContable.Migrations
                     nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     descripcion = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     fecha_creacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    creado_por_id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    fecha_aprobacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    creado_por = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     estado_partida_id = table.Column<int>(type: "int", nullable: false),
-                    aprobado_por_id = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    revisado_por = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -142,14 +143,14 @@ namespace ProyectoApiContable.Migrations
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_partidas_users_aprobado_por_id",
-                        column: x => x.aprobado_por_id,
+                        name: "FK_partidas_users_creado_por",
+                        column: x => x.creado_por,
                         principalTable: "users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_partidas_users_creado_por_id",
-                        column: x => x.creado_por_id,
+                        name: "FK_partidas_users_revisado_por",
+                        column: x => x.revisado_por,
                         principalTable: "users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -283,19 +284,19 @@ namespace ProyectoApiContable.Migrations
                 column: "partida_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_partidas_aprobado_por_id",
+                name: "IX_partidas_creado_por",
                 table: "partidas",
-                column: "aprobado_por_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_partidas_creado_por_id",
-                table: "partidas",
-                column: "creado_por_id");
+                column: "creado_por");
 
             migrationBuilder.CreateIndex(
                 name: "IX_partidas_estado_partida_id",
                 table: "partidas",
                 column: "estado_partida_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_partidas_revisado_por",
+                table: "partidas",
+                column: "revisado_por");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",

@@ -100,7 +100,8 @@ namespace ProyectoApiContable.Controllers
                 {
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim("UserId", user.Id)
+                    new(ClaimTypes.NameIdentifier, user.Id),
+                    new(ClaimTypes.Name, $"{user.UserName}"),
                 };
 
                 var userRoles = await _userManager.GetRolesAsync(user);

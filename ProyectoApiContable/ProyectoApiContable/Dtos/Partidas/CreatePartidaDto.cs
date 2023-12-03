@@ -13,3 +13,4 @@ public class CreatePartidaDto
         public List<CreateFilasPartidaDto> FilasPartida { get; set; }
         
 }
+

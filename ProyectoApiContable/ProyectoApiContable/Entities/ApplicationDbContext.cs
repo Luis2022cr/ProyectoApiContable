@@ -31,6 +31,7 @@ namespace ProyectoApiContable.Entities;
             modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("roles_claims");
             modelBuilder.Entity<IdentityUserToken<string>>().ToTable("users_tokens");
 
+          
             // Configuración de relaciones para Partida
             modelBuilder.Entity<Partida>()
                 .HasOne(p => p.CreadoPor)
@@ -39,10 +40,11 @@ namespace ProyectoApiContable.Entities;
                 .OnDelete(DeleteBehavior.Restrict); // Evitar la eliminación en cascada
 
             modelBuilder.Entity<Partida>()
-                .HasOne(p => p.AprobadoPor)
+                .HasOne(p => p.RevisadoPor)
                 .WithMany()
-                .HasForeignKey(p => p.AprobadoPorId)
+                .HasForeignKey(p => p.RevisadoPorId)
                 .OnDelete(DeleteBehavior.Restrict); // Evitar la eliminación en cascada
+
 
             modelBuilder.Entity<Partida>()
                 .HasOne(p => p.EstadoPartida)
