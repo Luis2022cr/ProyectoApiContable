@@ -33,7 +33,6 @@ namespace ProyectoApiContable.Controllers;
     }
 
         [HttpGet]
-        [AllowAnonymous]
         public async Task<ActionResult<ResponseDto<IReadOnlyList<TiposCuentaDto>>>> MostrarTiposCuentas()
         {
             var tiposCuentasDb = await _context.TiposCuentas.ToListAsync();
@@ -47,7 +46,6 @@ namespace ProyectoApiContable.Controllers;
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public async Task<ActionResult<ResponseDto<TiposCuentaDto>>> MostrarTipoCuenta(int id)
         {
             var tipoCuentaDb = await _context.TiposCuentas.FindAsync(id);

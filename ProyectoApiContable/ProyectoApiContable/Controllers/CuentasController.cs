@@ -7,6 +7,7 @@ using ProyectoApiContable.Dtos.Catalogos;
 using ProyectoApiContable.Entities;
 using ProyectoApiContable.Services.Autentication;
 using ProyectoApiContable.Services;
+using Microsoft.Data.SqlClient;
 
 namespace ProyectoApiContable.Controllers;
 
@@ -32,7 +33,6 @@ public class CuentasController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<IReadOnlyList<CuentaDto>>>> ObtenerCuentas()
     {
         var catalogosDb = await _context.Cuentas.ToListAsync();
@@ -45,7 +45,6 @@ public class CuentasController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> MostrarCuenta(Guid id)
     {
         var cuenta = await _context.Cuentas.FindAsync(id);
@@ -89,38 +88,60 @@ public class CuentasController : ControllerBase
             return BadRequest(badRequestResponse);
         }
 
-
-        // Mapear el CreateCuentaDto a una entidad Cuenta
-        var cuenta = _mapper.Map<Cuenta>(createCuentaDto);
-        cuenta.FechaCreacion = DateTime.Now;
-        // Guardar la cuenta en la base de datos
-        _context.Cuentas.Add(cuenta);
-        await _context.SaveChangesAsync();
-
-        // Retornar una respuesta con la cuenta creada
-        var cuentaCreadaDto = _mapper.Map<CuentaDto>(cuenta);
-
-        //Obtener usuario 
-        var usuarioActual = await _userContextService.GetUserAsync();
-
-        // Obtener la fecha y hora actual
-        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
-
-        //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
-            $"Nombre: {cuenta.Nombre} " +
-            $"Id: {cuenta.Id} " +
-            $"Saldo: {cuenta.Saldo} " +
-            $"- [{fechaActual}]");
-
-        var successResponse = new ResponseDto<CuentaDto>
+        try
         {
-            Status = true,
-            Message = "Cuenta creada correctamente.",
-            Data = cuentaCreadaDto
-        };
+            // Mapear el CreateCuentaDto a una entidad Cuenta
+            var cuenta = _mapper.Map<Cuenta>(createCuentaDto);
+            cuenta.FechaCreacion = DateTime.Now;
 
-        return CreatedAtAction(nameof(MostrarCuenta), new { id = cuenta.Id }, successResponse);
+            // Guardar la cuenta en la base de datos
+            _context.Cuentas.Add(cuenta);
+            await _context.SaveChangesAsync();
+
+            // Retornar una respuesta con la cuenta creada
+            var cuentaCreadaDto = _mapper.Map<CuentaDto>(cuenta);
+
+            // Obtener usuario 
+            var usuarioActual = await _userContextService.GetUserAsync();
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            // Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+                $"Nombre: {cuenta.Nombre} " +
+                $"Id: {cuenta.Id} " +
+                $"Saldo: {cuenta.Saldo} " +
+                $"- [{fechaActual}]");
+
+            var successResponse = new ResponseDto<CuentaDto>
+            {
+                Status = true,
+                Message = "Cuenta creada correctamente.",
+                Data = cuentaCreadaDto
+            };
+
+            return CreatedAtAction(nameof(MostrarCuenta), new { id = cuenta.Id }, successResponse);
+        }
+        catch (DbUpdateException ex)
+        {
+            if (ex.InnerException is SqlException sqlException && sqlException.Number == 2601)
+            {
+                // manejar error de codigo no unico
+                var errorResponse = new ResponseDto<CuentaDto>
+                {
+                    Status = false,
+                    Message = "¡El código no es único! Ya existe en la base de datos.",
+                    Data = null
+                };
+
+                return Conflict(errorResponse);
+            }
+            else
+            {
+                return StatusCode(500, "Error al procesar la solicitud");
+            }
+        }
     }
 
 
@@ -185,6 +206,7 @@ public class CuentasController : ControllerBase
 
         return Ok(successResponse);
     }
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> EliminarCuenta(Guid id)

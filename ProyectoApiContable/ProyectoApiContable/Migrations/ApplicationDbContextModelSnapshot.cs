@@ -257,6 +257,9 @@ namespace ProyectoApiContable.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
                     b.HasIndex("TipoCuentaId");
 
                     b.ToTable("cuentas");

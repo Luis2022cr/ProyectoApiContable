@@ -30,7 +30,11 @@ namespace ProyectoApiContable.Entities;
             modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("users_logins");
             modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("roles_claims");
             modelBuilder.Entity<IdentityUserToken<string>>().ToTable("users_tokens");
-
+            
+            //Que el codigo de cada cuenta sea unico
+            modelBuilder.Entity<Cuenta>()
+                .HasIndex(x => x.Codigo)
+                .IsUnique(true);
           
             // Configuración de relaciones para Partida
             modelBuilder.Entity<Partida>()

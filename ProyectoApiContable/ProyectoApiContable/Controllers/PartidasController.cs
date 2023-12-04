@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
+using ProyectoApiContable.Dtos.FilasPartidas;
 using ProyectoApiContable.Dtos.Partidas;
 using ProyectoApiContable.Entities;
 using ProyectoApiContable.Services;
@@ -33,7 +34,6 @@ public class PartidasController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<IActionResult> MostrarTodasLasPartidas()
     {
         try
@@ -68,7 +68,6 @@ public class PartidasController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<IActionResult> MostrarPartida(Guid id)
     {
         try
@@ -187,10 +186,20 @@ public class PartidasController : ControllerBase
             var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
             //Agregar el log en redis
-            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Ingreso una partida: " +
-                $"Nombre Partida: {partidaCreadaDto.Nombre} " +
-                $"Id: {partidaCreadaDto.Id} " +
-                $"- [{fechaActual}]");
+            string logMessage = $"El usuario: {usuarioActual} Ingreso una partida: " +
+                                $"Nombre Partida: {partidaCreadaDto.Nombre} " +
+                                $"Id: {partidaCreadaDto.Id} ";
+
+            foreach (var fila in partidaCreadaDto.FilasPartida)
+            {
+                logMessage +=
+                    $"CuentaId: {fila.CuentaId} " +
+                    $"Debito: {fila.Debito} " +
+                    $"Credito: {fila.Credito} ";
+            }
+
+            logMessage += $"- [{fechaActual}]";
+            await _redisServices.AgregarLogARedis(logMessage);
 
             return CreatedAtAction(nameof(MostrarPartida), new { id = partida.Id }, new ResponseDto<PartidaDto>
             {
@@ -391,10 +400,20 @@ public class PartidasController : ControllerBase
             var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
             //Agregar el log en redis
-            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Elimino la partida: " +
-                $"Nombre Partida: {partida.Nombre} " +
-                $"Id: {partida.Id} " +
-                $"- [{fechaActual}]");
+            string logMessage = $"El usuario: {usuarioActual} Ingreso una partida: " +
+                                $"Nombre Partida: {partida.Nombre} " +
+                                $"Id: {partida.Id} ";
+
+            foreach (var fila in partida.FilasPartida)
+            {
+                logMessage +=
+                    $"CuentaId: {fila.CuentaId} " +
+                    $"Debito: {fila.Debito} " +
+                    $"Credito: {fila.Credito} ";
+            }
+
+            logMessage += $"- [{fechaActual}]";
+            await _redisServices.AgregarLogARedis(logMessage);
 
             return Ok(new ResponseDto<PartidaDto>
             {

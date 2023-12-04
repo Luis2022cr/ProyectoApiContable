@@ -33,7 +33,6 @@ public class EstadosPartidasController : ControllerBase
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<IReadOnlyList<EstadosPartidaDto>>>> ObtenerEstadosPartida()
     {
         var estadosPartidaDb = await _context.EstadosPartidas.ToListAsync();
@@ -47,7 +46,6 @@ public class EstadosPartidasController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<EstadosPartidaDto>>> MostrarEstadoPartida(int id)
     {
         var estadoPartidaDb = await _context.EstadosPartidas.FindAsync(id);
