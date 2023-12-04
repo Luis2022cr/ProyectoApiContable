@@ -74,7 +74,9 @@ public class PartidasController : ControllerBase
         {
             var partida = await _context.Partidas
                 .Include(p => p.FilasPartida)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .Include(p => p.CreadoPor)
+                .Include(p => p.RevisadoPor)
+                .ToListAsync();
 
             if (partida == null)
             {
@@ -225,101 +227,109 @@ public class PartidasController : ControllerBase
     [HttpPut("{id}/Aprobar")]
     public async Task<IActionResult> AprobarPartida(Guid id, [FromBody] EstadoPartidaDto estadoPartidaDto)
     {
-        try
+        using (var transaction = await _context.Database.BeginTransactionAsync())
         {
-            if (estadoPartidaDto == null || !ModelState.IsValid)
+            try
             {
-                return BadRequest(new ResponseDto<PartidaDto>
+                if (estadoPartidaDto == null || !ModelState.IsValid)
                 {
-                    Status = false,
-                    Message = "Datos para aprobar la partida no válidos.",
-                    Data = null
-                });
-            }
+                    return BadRequest(new ResponseDto<PartidaDto>
+                    {
+                        Status = false,
+                        Message = "Datos para aprobar la partida no válidos.",
+                        Data = null
+                    });
+                }
 
-            // Buscar la partida por su Id
-            var partida = await _context.Partidas
-                .Include(p => p.FilasPartida)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                // Buscar la partida por su Id
+                var partida = await _context.Partidas
+                    .Include(p => p.FilasPartida)
+                    .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (partida == null)
-            {
-                return NotFound(new ResponseDto<PartidaDto>
+                if (partida == null)
                 {
-                    Status = false,
-                    Message = "Partida no encontrada.",
-                    Data = null
-                });
-            }
+                    return NotFound(new ResponseDto<PartidaDto>
+                    {
+                        Status = false,
+                        Message = "Partida no encontrada.",
+                        Data = null
+                    });
+                }
 
-            var usuarioActual = await _userContextService.GetUserAsync();
+                var usuarioActual = await _userContextService.GetUserAsync();
 
-            if (usuarioActual != null)
-            {
-                partida.RevisadoPorId = usuarioActual.Id;
-            }
-            else
-            {
-                return BadRequest(new ResponseDto<PartidaDto>
+                if (usuarioActual != null)
                 {
-                    Status = false,
-                    Message = "No se pudo encontrar el usuario actual.",
-                    Data = null
-                });
-            }
+                    partida.RevisadoPorId = usuarioActual.Id;
+                }
+                else
+                {
+                    return BadRequest(new ResponseDto<PartidaDto>
+                    {
+                        Status = false,
+                        Message = "No se pudo encontrar el usuario actual.",
+                        Data = null
+                    });
+                }
 
-            // Validar que la suma de débitos y créditos en las filas de la partida sea igual
-            if (!EsPartidaCuadrada(partida.FilasPartida))
-            {
-                partida.EstadoPartidaId = 3;
+                // Validar que la suma de débitos y créditos en las filas de la partida sea igual
+                if (!EsPartidaCuadrada(partida.FilasPartida))
+                {
+                    partida.EstadoPartidaId = 3;
+                    partida.FechaRevision = DateTime.Now;
+
+                    // Revertir la transacción en caso de una validación fallida
+                    await transaction.RollbackAsync();
+
+                    return BadRequest(new ResponseDto<PartidaDto>
+                    {
+                        Status = false,
+                        Message = "La partida no está cuadrada. La suma de débitos y créditos no coincide. por lo que fue rechazada.",
+                        Data = null
+                    });
+                }
+
+                // Actualizar el estado de la partida utilizando el DTO
+                partida.EstadoPartidaId = estadoPartidaDto.EstadoPartidaId;
                 partida.FechaRevision = DateTime.Now;
-            
+
+                // Aplicar los cambios a las cuentas involucradas
+                AplicarCambiosCuentas(partida.FilasPartida);
+
+                // Guardar los cambios en la base de datos
                 await _context.SaveChangesAsync();
-                return BadRequest(new ResponseDto<PartidaDto>
+
+                // Confirmar la transacción si todas las operaciones fueron exitosas
+                await transaction.CommitAsync();
+
+                var partidaAprobadaDto = _mapper.Map<PartidaDto>(partida);
+
+                // Obtener la fecha y hora actual
+                var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+                //Agregar el log en redis
+                await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Aprobo la partida: " +
+                    $"Nombre Partida: {partidaAprobadaDto.Nombre} " +
+                    $"Id: {partidaAprobadaDto.Id} " +
+                    $"- [{fechaActual}]");
+
+                return Ok(new ResponseDto<PartidaDto>
+                {
+                    Status = true,
+                    Message = "Partida aprobada correctamente.",
+                    Data = partidaAprobadaDto
+                });
+            }
+            catch (Exception)
+            {
+                // Log the exception
+                return StatusCode(500, new ResponseDto<PartidaDto>
                 {
                     Status = false,
-                    Message = "La partida no está cuadrada. La suma de débitos y créditos no coincide. por lo que fue rechazada.",
+                    Message = "Se produjo un error al aprobar la partida.",
                     Data = null
                 });
             }
-
-            // Actualizar el estado de la partida utilizando el DTO
-            partida.EstadoPartidaId = estadoPartidaDto.EstadoPartidaId;
-            partida.FechaRevision = DateTime.Now;
-
-            // Aplicar los cambios a las cuentas involucradas
-            AplicarCambiosCuentas(partida.FilasPartida);
-
-            // Guardar los cambios en la base de datos
-            await _context.SaveChangesAsync();
-
-            var partidaAprobadaDto = _mapper.Map<PartidaDto>(partida);
-
-            // Obtener la fecha y hora actual
-            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
-
-            //Agregar el log en redis
-            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Aprobo la partida: " +
-                $"Nombre Partida: {partidaAprobadaDto.Nombre} " +
-                $"Id: {partidaAprobadaDto.Id} " +
-                $"- [{fechaActual}]");
-
-            return Ok(new ResponseDto<PartidaDto>
-            {
-                Status = true,
-                Message = "Partida aprobada correctamente.",
-                Data = partidaAprobadaDto
-            });
-        }
-        catch (Exception)
-        {
-            // Log the exception
-            return StatusCode(500, new ResponseDto<PartidaDto>
-            {
-                Status = false,
-                Message = "Se produjo un error al aprobar la partida.",
-                Data = null
-            });
         }
     }
 
