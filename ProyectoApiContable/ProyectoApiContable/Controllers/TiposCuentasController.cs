@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
 using ProyectoApiContable.Dtos.TiposCuentas;
 using ProyectoApiContable.Entities;
+using ProyectoApiContable.Services;
+using ProyectoApiContable.Services.Autentication;
 
 namespace ProyectoApiContable.Controllers;
 
@@ -16,13 +18,22 @@ namespace ProyectoApiContable.Controllers;
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IRedisServices _redisServices;
+        private readonly IUserContextService _userContextService;
 
-        public TiposCuentasController(ApplicationDbContext context, IMapper mapper)
+    public TiposCuentasController(ApplicationDbContext context, 
+            IMapper mapper,
+            IRedisServices redisServices,
+            IUserContextService userContextService)
         {
             _context = context;
             _mapper = mapper;
-        }
+            _redisServices = redisServices;
+            _userContextService = userContextService;
+    }
+
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<ResponseDto<IReadOnlyList<TiposCuentaDto>>>> MostrarTiposCuentas()
         {
             var tiposCuentasDb = await _context.TiposCuentas.ToListAsync();
@@ -36,6 +47,7 @@ namespace ProyectoApiContable.Controllers;
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ResponseDto<TiposCuentaDto>>> MostrarTipoCuenta(int id)
         {
             var tipoCuentaDb = await _context.TiposCuentas.FindAsync(id);
@@ -86,6 +98,18 @@ namespace ProyectoApiContable.Controllers;
 
             // Retornar una respuesta con el tipo de cuenta creado
             var tipoCuentaCreadoDto = _mapper.Map<TiposCuentaDto>(tipoCuenta);
+            
+            //Obtener usuario 
+            var usuarioActual = await _userContextService.GetUserAsync();
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo un tipo de cuenta: " +
+                $"Nombre: {tipoCuentaCreadoDto.Nombre} " +
+                $"Id: {tipoCuentaCreadoDto.Id} " +
+                $"- [{fechaActual}]");
 
             var successResponse = new ResponseDto<TiposCuentaDto>
             {
@@ -135,6 +159,18 @@ namespace ProyectoApiContable.Controllers;
 
             // Retornar una respuesta con el tipo de cuenta actualizado
             var tipoCuentaActualizadoDto = _mapper.Map<TiposCuentaDto>(tipoCuenta);
+            
+            //Obtener usuario 
+            var usuarioActual = await _userContextService.GetUserAsync();
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Actualizo un tipo de cuenta: " +
+                $"Nombre: {tipoCuentaActualizadoDto.Nombre} " +
+                $"Id: {tipoCuentaActualizadoDto.Id} " +
+                $"- [{fechaActual}]");
 
             var successResponse = new ResponseDto<TiposCuentaDto>
             {
@@ -170,6 +206,18 @@ namespace ProyectoApiContable.Controllers;
 
             // Retornar una respuesta con el tipo de cuenta eliminado
             var tipoCuentaEliminadoDto = _mapper.Map<TiposCuentaDto>(tipoCuenta);
+
+            //Obtener usuario 
+            var usuarioActual = await _userContextService.GetUserAsync();
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo un tipo de cuenta: " +
+                $"Nombre: {tipoCuentaEliminadoDto.Nombre} " +
+                $"Id: {tipoCuentaEliminadoDto.Id} " +
+                $"- [{fechaActual}]");  
 
             var successResponse = new ResponseDto<TiposCuentaDto>
             {

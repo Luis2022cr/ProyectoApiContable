@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
 using ProyectoApiContable.Dtos.Catalogos;
 using ProyectoApiContable.Entities;
+using ProyectoApiContable.Services.Autentication;
+using ProyectoApiContable.Services;
 
 namespace ProyectoApiContable.Controllers;
 
@@ -15,14 +17,22 @@ public class CuentasController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IRedisServices _redisServices;
+    private readonly IUserContextService _userContextService;
 
-    public CuentasController(ApplicationDbContext context, IMapper mapper)
+    public CuentasController(ApplicationDbContext context, 
+        IMapper mapper,
+        IRedisServices redisServices,
+        IUserContextService userContextService)
     {
         _context = context;
         _mapper = mapper;
+        _redisServices = redisServices;
+        _userContextService = userContextService;
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<IReadOnlyList<CuentaDto>>>> ObtenerCuentas()
     {
         var catalogosDb = await _context.Cuentas.ToListAsync();
@@ -35,6 +45,7 @@ public class CuentasController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> MostrarCuenta(Guid id)
     {
         var cuenta = await _context.Cuentas.FindAsync(id);
@@ -89,6 +100,19 @@ public class CuentasController : ControllerBase
         // Retornar una respuesta con la cuenta creada
         var cuentaCreadaDto = _mapper.Map<CuentaDto>(cuenta);
 
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {cuenta.Nombre} " +
+            $"Id: {cuenta.Id} " +
+            $"Saldo: {cuenta.Saldo} " +
+            $"- [{fechaActual}]");
+
         var successResponse = new ResponseDto<CuentaDto>
         {
             Status = true,
@@ -139,6 +163,19 @@ public class CuentasController : ControllerBase
         // Retornar una respuesta con la cuenta actualizada
         var cuentaActualizadaDto = _mapper.Map<CuentaDto>(cuenta);
 
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {cuenta.Nombre} " +
+            $"Id: {cuenta.Id} " +
+            $"Saldo: {cuenta.Saldo} " +
+            $"- [{fechaActual}]");
+
         var successResponse = new ResponseDto<CuentaDto>
         {
             Status = true,
@@ -172,6 +209,19 @@ public class CuentasController : ControllerBase
 
         // Retornar una respuesta con la cuenta eliminada
         var cuentaEliminadaDto = _mapper.Map<CuentaDto>(cuenta);
+
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {cuenta.Nombre} " +
+            $"Id: {cuenta.Id} " +
+            $"Saldo: {cuenta.Saldo} " +
+            $"- [{fechaActual}]");
 
         var successResponse = new ResponseDto<CuentaDto>
         {

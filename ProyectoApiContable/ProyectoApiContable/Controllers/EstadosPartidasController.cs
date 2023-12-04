@@ -6,6 +6,8 @@ using ProyectoApiContable.Dtos;
 using ProyectoApiContable.Dtos.Catalogos;
 using ProyectoApiContable.Dtos.EstadosPartidas;
 using ProyectoApiContable.Entities;
+using ProyectoApiContable.Services.Autentication;
+using ProyectoApiContable.Services;
 
 namespace ProyectoApiContable.Controllers;
 
@@ -16,14 +18,22 @@ public class EstadosPartidasController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IRedisServices _redisServices;
+    private readonly IUserContextService _userContextService;
 
-    public EstadosPartidasController(ApplicationDbContext context, IMapper mapper)
+    public EstadosPartidasController(ApplicationDbContext context, 
+        IMapper mapper,
+        IRedisServices redisServices,
+        IUserContextService userContextService)
     {
         _context = context;
         _mapper = mapper;
+        _redisServices = redisServices;
+        _userContextService = userContextService;
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<IReadOnlyList<EstadosPartidaDto>>>> ObtenerEstadosPartida()
     {
         var estadosPartidaDb = await _context.EstadosPartidas.ToListAsync();
@@ -37,6 +47,7 @@ public class EstadosPartidasController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<ResponseDto<EstadosPartidaDto>>> MostrarEstadoPartida(int id)
     {
         var estadoPartidaDb = await _context.EstadosPartidas.FindAsync(id);
@@ -90,6 +101,18 @@ public class EstadosPartidasController : ControllerBase
         // Retornar una respuesta con el Estado de Partida creado
         var estadoPartidaCreadoDto = _mapper.Map<EstadosPartidaDto>(estadoPartida);
 
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {estadoPartida.Nombre} " +
+            $"Id: {estadoPartida.Id} " +
+            $"- [{fechaActual}]");
+
         var successResponse = new ResponseDto<EstadosPartidaDto>
         {
             Status = true,
@@ -141,6 +164,18 @@ public class EstadosPartidasController : ControllerBase
         // Retornar una respuesta con el Estado de Partida actualizado
         var estadoPartidaActualizadoDto = _mapper.Map<EstadosPartidaDto>(estadoPartida);
 
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {estadoPartida.Nombre} " +
+            $"Id: {estadoPartida.Id} " +
+            $"- [{fechaActual}]");
+
         var successResponse = new ResponseDto<EstadosPartidaDto>
         {
             Status = true,
@@ -174,6 +209,18 @@ public class EstadosPartidasController : ControllerBase
 
         // Retornar una respuesta con el Estado de Partida eliminado
         var estadoPartidaEliminadoDto = _mapper.Map<EstadosPartidaDto>(estadoPartida);
+
+        //Obtener usuario 
+        var usuarioActual = await _userContextService.GetUserAsync();
+
+        // Obtener la fecha y hora actual
+        var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+        //Agregar el log en redis
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+            $"Nombre: {estadoPartida.Nombre} " +
+            $"Id: {estadoPartida.Id} " +
+            $"- [{fechaActual}]");
 
         var successResponse = new ResponseDto<EstadosPartidaDto>
         {

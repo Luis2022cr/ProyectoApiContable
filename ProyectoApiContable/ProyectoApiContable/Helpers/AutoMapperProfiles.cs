@@ -33,7 +33,9 @@ namespace ProyectoApiContable.Helpers
 
             CreateMap<CreateFilasPartidaDto, FilasPartida>();
             CreateMap<Partida, PartidaDto>()
-                .ForMember(dest => dest.FilasPartida, opt => opt.MapFrom(src => src.FilasPartida));
+                .ForMember(dest => dest.FilasPartida, opt => opt.MapFrom(src => src.FilasPartida))
+                .ForMember(dest => dest.CreadoPor, opt => opt.MapFrom(src => src.CreadoPor.UserName))
+                .ForMember(dest => dest.RevisadoPor, opt => opt.MapFrom(src => src.RevisadoPor != null ? src.RevisadoPor.UserName : null));
         }
 
         private void MapsForFilasPartidas()

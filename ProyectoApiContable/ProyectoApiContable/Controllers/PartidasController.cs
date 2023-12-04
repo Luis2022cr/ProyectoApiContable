@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoApiContable.Dtos;
 using ProyectoApiContable.Dtos.Partidas;
 using ProyectoApiContable.Entities;
+using ProyectoApiContable.Services;
 using ProyectoApiContable.Services.Autentication;
 
 namespace ProyectoApiContable.Controllers;
@@ -17,21 +18,32 @@ public class PartidasController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IRedisServices _redisServices;
     private readonly IUserContextService _userContextService;
 
-    public PartidasController(ApplicationDbContext context, IMapper mapper, IUserContextService userContextService)
+    public PartidasController(ApplicationDbContext context, 
+        IMapper mapper,
+        IRedisServices redisServices,
+        IUserContextService userContextService)
     {
         _context = context;
         _mapper = mapper;
+        _redisServices = redisServices;
         _userContextService = userContextService;
     }
 
     [HttpGet]
-    public IActionResult MostrarTodasLasPartidas()
+    [AllowAnonymous]
+    public async Task<IActionResult> MostrarTodasLasPartidas()
     {
         try
         {
-            var partidas = _context.Partidas.Include(p => p.FilasPartida).ToList();
+            var partidas = await _context.Partidas
+                .Include(p => p.FilasPartida)
+                .Include(p => p.CreadoPor)
+                .Include(p => p.RevisadoPor) 
+                .ToListAsync();
+
             var partidasDto = _mapper.Map<List<PartidaDto>>(partidas);
 
             var response = new ResponseDto<List<PartidaDto>>
@@ -56,6 +68,7 @@ public class PartidasController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> MostrarPartida(Guid id)
     {
         try
@@ -99,8 +112,8 @@ public class PartidasController : ControllerBase
         }
     }
 
-
     [HttpPost]
+    [Authorize(Roles = "Empleado")]
     public async Task<IActionResult> CrearPartida([FromBody] CreatePartidaDto createPartidaDto)
     {
         try
@@ -115,12 +128,12 @@ public class PartidasController : ControllerBase
                 });
             }
             // Validar que el número de filas sea par
-            if (createPartidaDto.FilasPartida.Count % 2 != 0)
+            if (createPartidaDto.FilasPartida.Count < 2)
             {
                 return BadRequest(new ResponseDto<PartidaDto>
                 {
                     Status = false,
-                    Message = "El número de filas en la partida debe ser par.",
+                    Message = "El número de filas en la partida debe ser 2 o mas.",
                     Data = null
                 });
             }
@@ -170,6 +183,15 @@ public class PartidasController : ControllerBase
 
             var partidaCreadaDto = _mapper.Map<PartidaDto>(partida);
 
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Ingreso una partida: " +
+                $"Nombre Partida: {partidaCreadaDto.Nombre} " +
+                $"Id: {partidaCreadaDto.Id} " +
+                $"- [{fechaActual}]");
+
             return CreatedAtAction(nameof(MostrarPartida), new { id = partida.Id }, new ResponseDto<PartidaDto>
             {
                 Status = true,
@@ -188,135 +210,142 @@ public class PartidasController : ControllerBase
             });
         }
     }
+
     //endpoint para aprobar partidas
-    
     [Authorize(Roles = "Admin")]
-[HttpPut("{id}/Aprobar")]
-public async Task<IActionResult> AprobarPartida(Guid id, [FromBody] EstadoPartidaDto estadoPartidaDto)
-{
-    try
+    [HttpPut("{id}/Aprobar")]
+    public async Task<IActionResult> AprobarPartida(Guid id, [FromBody] EstadoPartidaDto estadoPartidaDto)
     {
-        if (estadoPartidaDto == null || !ModelState.IsValid)
+        try
         {
-            return BadRequest(new ResponseDto<PartidaDto>
+            if (estadoPartidaDto == null || !ModelState.IsValid)
             {
-                Status = false,
-                Message = "Datos para aprobar la partida no válidos.",
-                Data = null
-            });
-        }
+                return BadRequest(new ResponseDto<PartidaDto>
+                {
+                    Status = false,
+                    Message = "Datos para aprobar la partida no válidos.",
+                    Data = null
+                });
+            }
 
-        // Buscar la partida por su Id
-        var partida = await _context.Partidas
-            .Include(p => p.FilasPartida)
-            .FirstOrDefaultAsync(p => p.Id == id);
+            // Buscar la partida por su Id
+            var partida = await _context.Partidas
+                .Include(p => p.FilasPartida)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-        if (partida == null)
-        {
-            return NotFound(new ResponseDto<PartidaDto>
+            if (partida == null)
             {
-                Status = false,
-                Message = "Partida no encontrada.",
-                Data = null
-            });
-        }
+                return NotFound(new ResponseDto<PartidaDto>
+                {
+                    Status = false,
+                    Message = "Partida no encontrada.",
+                    Data = null
+                });
+            }
 
-        var usuarioActual = await _userContextService.GetUserAsync();
+            var usuarioActual = await _userContextService.GetUserAsync();
 
-        if (usuarioActual != null)
-        {
-            partida.RevisadoPorId = usuarioActual.Id;
-        }
-        else
-        {
-            return BadRequest(new ResponseDto<PartidaDto>
+            if (usuarioActual != null)
             {
-                Status = false,
-                Message = "No se pudo encontrar el usuario actual.",
-                Data = null
-            });
-        }
+                partida.RevisadoPorId = usuarioActual.Id;
+            }
+            else
+            {
+                return BadRequest(new ResponseDto<PartidaDto>
+                {
+                    Status = false,
+                    Message = "No se pudo encontrar el usuario actual.",
+                    Data = null
+                });
+            }
 
-        // Validar que la suma de débitos y créditos en las filas de la partida sea igual
-        if (!EsPartidaCuadrada(partida.FilasPartida))
-        {
-            partida.EstadoPartidaId = 3;
-            partida.FechaRevision = DateTime.Now;
+            // Validar que la suma de débitos y créditos en las filas de la partida sea igual
+            if (!EsPartidaCuadrada(partida.FilasPartida))
+            {
+                partida.EstadoPartidaId = 3;
+                partida.FechaRevision = DateTime.Now;
             
+                await _context.SaveChangesAsync();
+                return BadRequest(new ResponseDto<PartidaDto>
+                {
+                    Status = false,
+                    Message = "La partida no está cuadrada. La suma de débitos y créditos no coincide. por lo que fue rechazada.",
+                    Data = null
+                });
+            }
+
+            // Actualizar el estado de la partida utilizando el DTO
+            partida.EstadoPartidaId = estadoPartidaDto.EstadoPartidaId;
+            partida.FechaRevision = DateTime.Now;
+
+            // Aplicar los cambios a las cuentas involucradas
+            AplicarCambiosCuentas(partida.FilasPartida);
+
+            // Guardar los cambios en la base de datos
             await _context.SaveChangesAsync();
-            return BadRequest(new ResponseDto<PartidaDto>
+
+            var partidaAprobadaDto = _mapper.Map<PartidaDto>(partida);
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Aprobo la partida: " +
+                $"Nombre Partida: {partidaAprobadaDto.Nombre} " +
+                $"Id: {partidaAprobadaDto.Id} " +
+                $"- [{fechaActual}]");
+
+            return Ok(new ResponseDto<PartidaDto>
+            {
+                Status = true,
+                Message = "Partida aprobada correctamente.",
+                Data = partidaAprobadaDto
+            });
+        }
+        catch (Exception)
+        {
+            // Log the exception
+            return StatusCode(500, new ResponseDto<PartidaDto>
             {
                 Status = false,
-                Message = "La partida no está cuadrada. La suma de débitos y créditos no coincide. por lo que fue rechazada.",
+                Message = "Se produjo un error al aprobar la partida.",
                 Data = null
             });
         }
-
-        // Actualizar el estado de la partida utilizando el DTO
-        partida.EstadoPartidaId = estadoPartidaDto.EstadoPartidaId;
-        partida.FechaRevision = DateTime.Now;
-
-        // Aplicar los cambios a las cuentas involucradas
-        AplicarCambiosCuentas(partida.FilasPartida);
-
-        // Guardar los cambios en la base de datos
-        await _context.SaveChangesAsync();
-
-        var partidaAprobadaDto = _mapper.Map<PartidaDto>(partida);
-
-        return Ok(new ResponseDto<PartidaDto>
-        {
-            Status = true,
-            Message = "Partida aprobada correctamente.",
-            Data = partidaAprobadaDto
-        });
     }
-    catch (Exception)
+
+    private bool EsPartidaCuadrada(List<FilasPartida> filasPartida)
     {
-        // Log the exception
-        return StatusCode(500, new ResponseDto<PartidaDto>
-        {
-            Status = false,
-            Message = "Se produjo un error al aprobar la partida.",
-            Data = null
-        });
+        decimal sumaDebitos = filasPartida.Sum(f => f.Debito);
+        decimal sumaCreditos = filasPartida.Sum(f => f.Credito);
+        return sumaDebitos == sumaCreditos;
     }
-}
 
-private bool EsPartidaCuadrada(List<FilasPartida> filasPartida)
-{
-    decimal sumaDebitos = filasPartida.Sum(f => f.Debito);
-    decimal sumaCreditos = filasPartida.Sum(f => f.Credito);
-    return sumaDebitos == sumaCreditos;
-}
-
-private void AplicarCambiosCuentas(List<FilasPartida> filasPartida)
-{
-    foreach (var fila in filasPartida)
+    private void AplicarCambiosCuentas(List<FilasPartida> filasPartida)
     {
-        var cuenta = _context.Cuentas.Find(fila.CuentaId);
-
-        if (cuenta != null)
+        foreach (var fila in filasPartida)
         {
-            // Actualizar saldo de la cuenta
-            cuenta.Saldo += fila.Debito;
-            cuenta.Saldo -= fila.Credito;
+            var cuenta = _context.Cuentas.Find(fila.CuentaId);
 
-            // Puedes agregar lógica adicional aquí según tus requerimientos
+            if (cuenta != null)
+            {
+                // Actualizar saldo de la cuenta
+                cuenta.Saldo += fila.Debito;
+                cuenta.Saldo -= fila.Credito;
 
-            // Guardar cambios en la cuenta
-            _context.Entry(cuenta).State = EntityState.Modified;
+
+                // Guardar cambios en la cuenta
+                _context.Entry(cuenta).State = EntityState.Modified;
+            }
+            else
+            {
+                
+            }
         }
-        else
-        {
-            // Manejar el caso donde la cuenta no se encuentra
-            // Puedes lanzar una excepción, registrar un error, etc.
-        }
+
+        // Guardar cambios en la base de datos
+        _context.SaveChanges();
     }
-
-    // Guardar cambios en la base de datos
-    _context.SaveChanges();
-}
 
     
     [Authorize(Roles = "Admin")]
@@ -355,6 +384,18 @@ private void AplicarCambiosCuentas(List<FilasPartida> filasPartida)
             // Guardar los cambios en la base de datos
             await _context.SaveChangesAsync();
 
+            //Obtener usuario 
+            var usuarioActual = await _userContextService.GetUserAsync();
+
+            // Obtener la fecha y hora actual
+            var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
+
+            //Agregar el log en redis
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Elimino la partida: " +
+                $"Nombre Partida: {partida.Nombre} " +
+                $"Id: {partida.Id} " +
+                $"- [{fechaActual}]");
+
             return Ok(new ResponseDto<PartidaDto>
             {
                 Status = true,
@@ -373,6 +414,4 @@ private void AplicarCambiosCuentas(List<FilasPartida> filasPartida)
             });
         }
     }
-
-
 }
