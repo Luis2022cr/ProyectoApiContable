@@ -76,7 +76,7 @@ public class PartidasController : ControllerBase
                 .Include(p => p.FilasPartida)
                 .Include(p => p.CreadoPor)
                 .Include(p => p.RevisadoPor)
-                .ToListAsync();
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (partida == null)
             {
@@ -222,7 +222,6 @@ public class PartidasController : ControllerBase
         }
     }
 
-    //endpoint para aprobar partidas
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}/Aprobar")]
     public async Task<IActionResult> AprobarPartida(Guid id, [FromBody] EstadoPartidaDto estadoPartidaDto)
@@ -258,11 +257,7 @@ public class PartidasController : ControllerBase
 
                 var usuarioActual = await _userContextService.GetUserAsync();
 
-                if (usuarioActual != null)
-                {
-                    partida.RevisadoPorId = usuarioActual.Id;
-                }
-                else
+                if (usuarioActual == null)
                 {
                     return BadRequest(new ResponseDto<PartidaDto>
                     {
@@ -275,16 +270,20 @@ public class PartidasController : ControllerBase
                 // Validar que la suma de débitos y créditos en las filas de la partida sea igual
                 if (!EsPartidaCuadrada(partida.FilasPartida))
                 {
-                    partida.EstadoPartidaId = 3;
-                    partida.FechaRevision = DateTime.Now;
-
                     // Revertir la transacción en caso de una validación fallida
                     await transaction.RollbackAsync();
+
+                    partida.EstadoPartidaId = 3;
+                    partida.FechaRevision = DateTime.Now;
+                    partida.RevisadoPorId = usuarioActual.Id;
+
+                    await _context.SaveChangesAsync();
 
                     return BadRequest(new ResponseDto<PartidaDto>
                     {
                         Status = false,
-                        Message = "La partida no está cuadrada. La suma de débitos y créditos no coincide. por lo que fue rechazada.",
+                        Message =
+                            "La partida no está cuadrada. La suma de débitos y créditos no coincide, por lo que fue rechazada.",
                         Data = null
                     });
                 }
@@ -292,6 +291,7 @@ public class PartidasController : ControllerBase
                 // Actualizar el estado de la partida utilizando el DTO
                 partida.EstadoPartidaId = estadoPartidaDto.EstadoPartidaId;
                 partida.FechaRevision = DateTime.Now;
+                partida.RevisadoPorId = usuarioActual.Id;
 
                 // Aplicar los cambios a las cuentas involucradas
                 AplicarCambiosCuentas(partida.FilasPartida);
@@ -307,10 +307,10 @@ public class PartidasController : ControllerBase
                 // Obtener la fecha y hora actual
                 var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
-                //Agregar el log en redis
-                await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Aprobo la partida: " +
-                    $"Nombre Partida: {partidaAprobadaDto.Nombre} " +
-                    $"Id: {partidaAprobadaDto.Id} " +
+                // Agregar el log en redis
+                await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} aprobo una partida: " +
+                    $"Parida: {partida.Nombre} " +
+                    $"Id: {partida.Id} " +
                     $"- [{fechaActual}]");
 
                 return Ok(new ResponseDto<PartidaDto>
@@ -322,6 +322,9 @@ public class PartidasController : ControllerBase
             }
             catch (Exception)
             {
+                // Revertir la transacción en caso de un error
+                await transaction.RollbackAsync();
+
                 // Log the exception
                 return StatusCode(500, new ResponseDto<PartidaDto>
                 {
@@ -332,6 +335,7 @@ public class PartidasController : ControllerBase
             }
         }
     }
+
 
     private bool EsPartidaCuadrada(List<FilasPartida> filasPartida)
     {
@@ -349,8 +353,8 @@ public class PartidasController : ControllerBase
             if (cuenta != null)
             {
                 // Actualizar saldo de la cuenta
-                cuenta.Saldo += fila.Debito;
-                cuenta.Saldo -= fila.Credito;
+                cuenta.Saldo -= fila.Debito;
+                cuenta.Saldo += fila.Credito;
 
 
                 // Guardar cambios en la cuenta
@@ -410,20 +414,30 @@ public class PartidasController : ControllerBase
             var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
             //Agregar el log en redis
-            string logMessage = $"El usuario: {usuarioActual} Ingreso una partida: " +
-                                $"Nombre Partida: {partida.Nombre} " +
-                                $"Id: {partida.Id} ";
-
-            foreach (var fila in partida.FilasPartida)
+            string logMessage = "Error al eliminar la partida. Detalles: ";
+            if (partida != null)
             {
-                logMessage +=
-                    $"CuentaId: {fila.CuentaId} " +
-                    $"Debito: {fila.Debito} " +
-                    $"Credito: {fila.Credito} ";
-            }
+                logMessage += $"Nombre Partida: {partida.Nombre} Id: {partida.Id} ";
 
-            logMessage += $"- [{fechaActual}]";
-            await _redisServices.AgregarLogARedis(logMessage);
+                if (partida.FilasPartida != null)
+                {
+                    foreach (var fila in partida.FilasPartida)
+                    {
+                        logMessage +=
+                            $"CuentaId: {fila.CuentaId} " +
+                            $"Debito: {fila.Debito} " +
+                            $"Credito: {fila.Credito} ";
+                    }
+                }
+                else
+                {
+                    logMessage += "No se encontraron filas de partida asociadas. ";
+                }
+            }
+            else
+            {
+                logMessage += "La partida es nula. ";
+            }
 
             return Ok(new ResponseDto<PartidaDto>
             {
@@ -432,8 +446,9 @@ public class PartidasController : ControllerBase
                 Data = null
             });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
             // Log the exception
             return StatusCode(500, new ResponseDto<PartidaDto>
             {

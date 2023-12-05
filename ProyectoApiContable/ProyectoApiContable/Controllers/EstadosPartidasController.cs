@@ -106,7 +106,7 @@ public class EstadosPartidasController : ControllerBase
         var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
         //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo un Estado: " +
             $"Nombre: {estadoPartida.Nombre} " +
             $"Id: {estadoPartida.Id} " +
             $"- [{fechaActual}]");
@@ -169,7 +169,7 @@ public class EstadosPartidasController : ControllerBase
         var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
         //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Actualizo un estado: " +
             $"Nombre: {estadoPartida.Nombre} " +
             $"Id: {estadoPartida.Id} " +
             $"- [{fechaActual}]");
@@ -215,7 +215,7 @@ public class EstadosPartidasController : ControllerBase
         var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
         //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Borro un estado: " +
             $"Nombre: {estadoPartida.Nombre} " +
             $"Id: {estadoPartida.Id} " +
             $"- [{fechaActual}]");

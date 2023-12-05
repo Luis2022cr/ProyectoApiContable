@@ -191,7 +191,7 @@ public class CuentasController : ControllerBase
         var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
         //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} actualizo una cuenta: " +
             $"Nombre: {cuenta.Nombre} " +
             $"Id: {cuenta.Id} " +
             $"Saldo: {cuenta.Saldo} " +
@@ -239,7 +239,7 @@ public class CuentasController : ControllerBase
         var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
         //Agregar el log en redis
-        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo una nueva cuenta: " +
+        await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} borro una cuenta: " +
             $"Nombre: {cuenta.Nombre} " +
             $"Id: {cuenta.Id} " +
             $"Saldo: {cuenta.Saldo} " +

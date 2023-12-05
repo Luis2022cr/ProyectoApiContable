@@ -212,7 +212,7 @@ namespace ProyectoApiContable.Controllers;
             var fechaActual = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
 
             //Agregar el log en redis
-            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Creo un tipo de cuenta: " +
+            await _redisServices.AgregarLogARedis($"El usuario: {usuarioActual} Borro un tipo de cuenta: " +
                 $"Nombre: {tipoCuentaEliminadoDto.Nombre} " +
                 $"Id: {tipoCuentaEliminadoDto.Id} " +
                 $"- [{fechaActual}]");  
@@ -226,8 +226,5 @@ namespace ProyectoApiContable.Controllers;
 
             return Ok(successResponse);
         }
-
-
-
     }
 

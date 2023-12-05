@@ -12,7 +12,7 @@ using ProyectoApiContable.Entities;
 namespace ProyectoApiContable.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231204181026_MigracionFinal")]
+    [Migration("20231205042228_MigracionFinal")]
     partial class MigracionFinal
     {
         /// <inheritdoc />
