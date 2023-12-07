@@ -197,6 +197,20 @@ namespace ProyectoApiContable.Controllers;
                 return NotFound(notFoundResponse);
             }
             
+            var estaAsociadaACuentass = _context.Cuentas
+            .Any(p => p.TipoCuentaId == id);
+
+            if (estaAsociadaACuentass)
+            {
+                var response = new ResponseDto<TiposCuentaDto>
+                {
+                    Status = false,
+                    Message = "No se puede eliminar el tipo de cuenta porque está asociada a una o más cuentas.",
+                    Data = null
+                };
+
+                return BadRequest(response);
+            }
 
             // Eliminar el tipo de cuenta de la base de datos
             _context.TiposCuentas.Remove(tipoCuenta);

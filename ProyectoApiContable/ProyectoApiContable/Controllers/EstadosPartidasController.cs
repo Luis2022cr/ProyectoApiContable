@@ -201,6 +201,21 @@ public class EstadosPartidasController : ControllerBase
             return NotFound(notFoundResponse);
         }
 
+        var estaAsociadaAPartidas = _context.Partidas
+            .Any(p => p.EstadoPartidaId == id);
+
+        if (estaAsociadaAPartidas)
+        {
+            var response = new ResponseDto<CuentaDto>
+            {
+                Status = false,
+                Message = "No se puede eliminar el estado porque está asociada a una o más partidas.",
+                Data = null
+            };
+
+            return BadRequest(response);
+        }
+
         // Eliminar el Estado de Partida de la base de datos
         _context.EstadosPartidas.Remove(estadoPartida);
         await _context.SaveChangesAsync();

@@ -225,6 +225,21 @@ public class CuentasController : ControllerBase
             return NotFound(notFoundResponse);
         }
 
+        var estaAsociadaAPartidas = _context.Partidas
+            .Any(p => p.FilasPartida.Any(f => f.CuentaId == id));
+
+        if (estaAsociadaAPartidas)
+        {
+            var response = new ResponseDto<CuentaDto>
+            {
+                Status = false,
+                Message = "No se puede eliminar la cuenta porque está asociada a una o más partidas.",
+                Data = null
+            };
+
+            return BadRequest(response);
+        }
+
         // Eliminar la cuenta de la base de datos
         _context.Cuentas.Remove(cuenta);
         await _context.SaveChangesAsync();

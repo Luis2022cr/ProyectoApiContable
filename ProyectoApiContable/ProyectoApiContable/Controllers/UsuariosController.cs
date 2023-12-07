@@ -228,7 +228,7 @@ namespace ProyectoApiContable.Controllers
             }
 
             // Validar que el rol sea 'Admin' o 'Empleado'
-            if (dto.Rol != "Admin" && dto.Rol != "User")
+            if (dto.Rol != "Admin" && dto.Rol != "Empleado")
             {
                 return BadRequest(new ResponseDto<object>
                 {
